@@ -1,0 +1,1 @@
+- **Day 1**: Implemented async `probe()` function. Probes multiple URLs in parallel using `asyncio.gather()`. Handles timeouts, connection errors, and unknown exceptions. Observed that shared AsyncClient is needed for true parallelism.
