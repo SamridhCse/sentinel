@@ -51,21 +51,22 @@ async def probe(client: httpx.AsyncClient, url: str) -> dict:
 
 
 async def main():
+    # Import function ke andar — taaki root folder se chalao toh kaam kare
+    from message_queue.producer import push_probe_result
+    
     urls = [
         "https://api.github.com",
         "https://httpbin.org/get",
         "https://this-does-not-exist-xyz123.com",
     ]
-
+    
     async with httpx.AsyncClient(timeout=10.0) as client:
-        start = time.perf_counter()
         results = await asyncio.gather(*[probe(client, url) for url in urls])
-        total = (time.perf_counter() - start) * 1000
-
-    for r in results:
-        print(r)
-    print(f"\nTotal time for {len(urls)} URLs: {total:.2f}ms")
-
+    
+    # Har result ko Redis mein daalo
+    for result in results:
+        entry_id = push_probe_result(result)
+        print(f"Pushed {entry_id}: {result['url']} -> status={result['status_code']}")
 
 if __name__ == "__main__":
     asyncio.run(main())
