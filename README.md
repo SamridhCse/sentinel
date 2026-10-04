@@ -1,1 +1,3 @@
 - **Day 1**: Implemented async `probe()` function. Probes multiple URLs in parallel using `asyncio.gather()`. Handles timeouts, connection errors, and unknown exceptions. Observed that shared AsyncClient is needed for true parallelism.
+
+- **Day 2**: Refactored probe to use shared `AsyncClient` for true parallelism (3 URLs: 3296ms → 1028ms). Integrated Redis Streams — collector pushes results to a `probes` stream, a separate consumer reads them. This decouples collection from processing, the core principle of scalable observability.
