@@ -1,13 +1,16 @@
 """
-Redis consumer — Stream se messages padhta hai.
+Redis consumer — Stream se messages padhta hai aur TimescaleDB mein daalta hai.
 """
 import redis
+
+# DB insert function import karo
+from storage.db import insert_probe
 
 
 def start_consumer():
     """
     'probes' stream se messages padhta rehta hai.
-    Naye messages ke liye wait karta hai.
+    Har message DB mein insert karta hai.
     """
     # Redis se connect
     r = redis.Redis(
@@ -24,10 +27,6 @@ def start_consumer():
     
     while True:
         # XREAD — stream se padho
-        # "probes" = stream ka naam
-        # last_id = is ID ke BAAD se padho
-        # block=2000 = 2 second wait karo agar naya message na ho
-        # count=10 = ek baar mein max 10 messages
         messages = r.xread(
             {"probes": last_id},
             block=2000,
@@ -35,15 +34,20 @@ def start_consumer():
         )
         
         if messages:
-            # messages ka structure: [(stream_name, [(id, data), ...])]
             for stream_name, entries in messages:
                 for entry_id, data in entries:
-                    print(f"[{entry_id}] {data}")
+                    # Screen pe print karo
+                    print(f"[{entry_id}] {data['url']}")
                     
-                    # last_id update karo — taaki next read pe duplicate na aaye
+                    # DB mein insert karo
+                    try:
+                        insert_probe(data)
+                    except Exception as e:
+                        print(f"  DB insert failed: {e}")
+                    
+                    # last_id update karo
                     last_id = entry_id
 
 
-# Sirf tab chalao jab direct is file ko run karo
 if __name__ == "__main__":
     start_consumer()
